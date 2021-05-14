@@ -1,7 +1,7 @@
 PODS:
   - FGIAPService (0.1.0):
-    - UICKeyChainStore (~> 2.2.1)
-  - UICKeyChainStore (2.2.1)
+    - UICKeyChainStore (~> 2.1.0)
+  - UICKeyChainStore (2.1.2)
 
 DEPENDENCIES:
   - FGIAPService (from `../`)
@@ -15,8 +15,8 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  FGIAPService: 78b9624c0e59c552103fceb1998becfd05a69027
-  UICKeyChainStore: ba3bff2c762b12db1e516f395c837dd25298b05e
+  FGIAPService: d14311e3fb109622c09eb1f265207328acdcdfa1
+  UICKeyChainStore: 85db518bb1d294366d15ec9b92a416c4e670518f
 
 PODFILE CHECKSUM: 8d71de9cea3a5d3d5214d317d8c5ddcefc6333b7
 

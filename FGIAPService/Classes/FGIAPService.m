@@ -12,17 +12,12 @@
 #import "NSArray+FGIsNullOrEmpty.h"
 
 @interface FGIAPService () <SKPaymentTransactionObserver, SKRequestDelegate>
-
-@property (nonatomic, strong) id<FGIAPVerifyTransaction> verifyTransaction;
-
-@property (nonatomic, copy) FGIAPManagerBuyBlock buyProductCompleteBlock;
-
-@property (nonatomic, strong) NSString *handleTradeNo;
 /// 保存内购成功但校验失败未finish的Transaction，用于重新获取票据，以及轮询重试
 @property (nonatomic, strong) NSMutableDictionary <NSString *,FGIAPTransaction *>*transactionMaps;
-
+@property (nonatomic, strong) id<FGIAPVerifyTransaction> verifyTransaction;
+@property (nonatomic, copy) FGIAPManagerBuyBlock buyProductCompleteBlock;
+@property (nonatomic, strong) NSString *handleTradeNo;
 @property (nonatomic, strong) FGIAPKeyChainStoreHelper *productStore;
-
 @property (nonatomic, strong) NSTimer *repeatTimer;
 
 @end
@@ -52,20 +47,13 @@
         completion(@"@@## 获取内购权限失败", FGIAPManagerPurchaseRusultFail);
         return;
     }
-    
     if ([product.productIdentifier FG_isNSStringAndNotEmpty] && [tradeNo FG_isNSStringAndNotEmpty]) {
-     
         self.handleTradeNo = tradeNo;
-        /// 购买
         self.buyProductCompleteBlock = completion;
-        
         /// 用于applicationUsername、transactionIdentifier为空情况的处理
         [self.productStore update:tradeNo product:product.productIdentifier];
-        
         SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
-        // 有一些特殊情况会导致payment.applicationUsername 为空. 所以自己额外存储tradeNo
         payment.applicationUsername = tradeNo;
-        
         if ([SKPaymentQueue defaultQueue]) {
             [[SKPaymentQueue defaultQueue] addPayment:payment];
         }
@@ -84,14 +72,10 @@
         [self _verifyTrade:tradeNo handler:handler];
     }else if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(checkTradeReult:complete:)]) {
         [self.verifyTransaction checkTradeReult:tradeNo complete:^(NSString * _Nonnull message, FGIAPVerifyTransactionRusult result) {
-            if (handler) {
-                handler(message, result);
-            }
+            if (handler) handler(message, result);
         }];
     }else{
-        if (handler) {
-            handler(@"verifyTransaction不存在", FGIAPManagerVerifyRusultFail);
-        }
+        if (handler) handler(@"verifyTransaction不存在", FGIAPManagerVerifyRusultFail);
     }
 }
 
@@ -127,6 +111,7 @@
                 [self completeTransaction:transaction retryWhenreceiptURLisEmpty:YES];
                 break;
             case SKPaymentTransactionStateFailed:
+                FGLog(@"@@## 商品交易失败");
                 [self failedTransaction:transaction];
                 break;
             case SKPaymentTransactionStateDeferred:
@@ -155,8 +140,9 @@
 
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         [self _showAlert:@"无法获取订单号，如果存在支付异常，请尝试重启APP或者联系客服"];
+        [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultFail message:@"无法获取订单号"];
     }else{
-        /// 用于漏单轮询重试
+        /// fix：用于漏单轮询重试
         FGIAPTransaction *m_transction = [[FGIAPTransaction alloc] init];
         m_transction.transaction = transaction;
         m_transction.handle = YES;
@@ -178,10 +164,10 @@
             FGLog(@"@@## 重新请求票据信息");
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
         }else{
-            /// 放到重试定时器中
             m_transction.handle = NO;
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReReceiptNoNotExist parms:errorMaps];
             [self _showAlert:@"无法获取票据，如果存在支付异常，请尝试重启APP或者联系客服"];
+            [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultFail message:@"无法获取票据"];
         }
     }
 }
@@ -195,7 +181,6 @@
 
 
 - (void)failedTransaction:(SKPaymentTransaction *)transaction {
-    
     FGLog(@"@@## %s %@ %@", __func__, transaction.transactionIdentifier, transaction.payment.applicationUsername);
 
     NSString *tradeNo  = [self _tradeNoOfTransaction:transaction];
@@ -203,7 +188,6 @@
     NSInteger cancel = transaction.error.code == SKErrorPaymentCancelled;
     FGIAPManagerPurchaseRusult result = cancel ? FGIAPManagerPurchaseRusultCancel : FGIAPManagerPurchaseRusultFail;
     NSString *message = cancel ? @"用户取消" : @"购买失败";
-
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         [self _finishTransaction:transaction result:result message:message];
     }else{
@@ -211,7 +195,6 @@
         if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushFailTradeReultToServer:cancel:transaction:complete:)]) {
             
             [self.verifyTransaction pushFailTradeReultToServer:tradeNo cancel:cancel transaction:transaction complete:^(NSString * _Nonnull requestMessage, NSError * _Nullable requestErr) {
-               
                 if (!requestErr) {
                     [wSelf _finishTransaction:transaction result:result message:message];
                 }else{
@@ -296,7 +279,6 @@
     /// 如果漏单在重新校验的过程中tradeNo丢失，尝试读取maps中的缓存
     /// fix:这个步骤，可以来解决 FGIAPProductKeyChainStore 每次获取到的tradeNo不同的问题
     if (![tradeNo FG_isNSStringAndNotEmpty]){
-        
         if ([transaction.transactionIdentifier FG_isNSStringAndNotEmpty]) {
             [self.transactionMaps enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, FGIAPTransaction * _Nonnull obj, BOOL * _Nonnull stop) {
                 if ([obj.transaction.transactionIdentifier isEqualToString:transaction.transactionIdentifier]) {

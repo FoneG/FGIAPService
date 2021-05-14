@@ -23,5 +23,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '9.0'
   s.source_files = 'FGIAPService/Classes/**/*'
   s.framework  = 'StoreKit'
-  s.dependency 'UICKeyChainStore', '~> 2.2.1'
+  s.dependency 'UICKeyChainStore', '~> 2.1.0'
 end
