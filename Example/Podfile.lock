@@ -1,0 +1,23 @@
+PODS:
+  - FGIAPService (0.1.0):
+    - UICKeyChainStore (~> 2.2.1)
+  - UICKeyChainStore (2.2.1)
+
+DEPENDENCIES:
+  - FGIAPService (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - UICKeyChainStore
+
+EXTERNAL SOURCES:
+  FGIAPService:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  FGIAPService: 78b9624c0e59c552103fceb1998becfd05a69027
+  UICKeyChainStore: ba3bff2c762b12db1e516f395c837dd25298b05e
+
+PODFILE CHECKSUM: 8d71de9cea3a5d3d5214d317d8c5ddcefc6333b7
+
+COCOAPODS: 1.9.3
