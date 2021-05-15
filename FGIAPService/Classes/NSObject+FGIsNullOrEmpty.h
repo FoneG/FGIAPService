@@ -1,5 +1,5 @@
 //
-//  NSArray+FGIsNullOrEmpty.h
+//  NSObject+FGIsNullOrEmpty.h
 //  FGIAPService
 //
 //  Created by FoneG on 2021/5/10.

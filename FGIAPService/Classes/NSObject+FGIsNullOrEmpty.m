@@ -1,13 +1,13 @@
 //
-//  NSArray+FGIsNullOrEmpty.m
+//  NSObject+FGIsNullOrEmpty.m
 //  FGIAPService
 //
 //  Created by FoneG on 2021/5/10.
 //
 
-#import "NSArray+FGIsNullOrEmpty.h"
+#import "NSObject+FGIsNullOrEmpty.h"
 
-@implementation NSArray (FGIsNullOrEmpty)
+@implementation NSObject (FGIsNullOrEmpty)
 
 - (BOOL)FG_isNSStringAndNotEmpty
 {

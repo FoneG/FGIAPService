@@ -9,7 +9,7 @@
 #import "FGIAPKeyChainStoreHelper.h"
 #import "FGIAPTransaction.h"
 #import "FGIAPServiceUtility.h"
-#import "NSArray+FGIsNullOrEmpty.h"
+#import "NSObject+FGIsNullOrEmpty.h"
 
 @interface FGIAPService () <SKPaymentTransactionObserver, SKRequestDelegate>
 /// 保存内购成功但校验失败未finish的Transaction，用于重新获取票据，以及轮询重试

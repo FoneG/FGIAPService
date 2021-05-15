@@ -8,7 +8,7 @@
 #import "FGIAPKeyChainStoreHelper.h"
 #import <UICKeyChainStore/UICKeyChainStore.h>
 #import "FGIAPServiceUtility.h"
-#import "NSArray+FGIsNullOrEmpty.h"
+#import "NSObject+FGIsNullOrEmpty.h"
 
 static NSString *FGIAPProductKeyChainStoreService = @"__FGIAPProductKeyChainStore__";
 
