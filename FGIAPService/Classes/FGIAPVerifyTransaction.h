@@ -20,8 +20,6 @@ typedef NS_ENUM(NSInteger, FGIAPServiceErrorType) {
     FGIAPServiceErrorTypeNone,
     ///找不到匹配的订单号
     FGIAPServiceErrorTypeTradeNoNotExist,
-    ///找不到匹配的transactionIdentifier
-    FGIAPServiceErrorTypeTransactionIdNoNotExist,
     ///找不到匹配的applicationUsername
     FGIAPServiceErrorTypeApplicationUsernameNoNotExist,
     ///本地存储找不到匹配的orderId

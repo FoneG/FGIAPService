@@ -11,6 +11,15 @@
 #import "FGIAPServiceUtility.h"
 #import "NSObject+FGIsNullOrEmpty.h"
 
+
+static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTransaction *transaction) {
+    NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
+    [errorMaps setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
+    [errorMaps setValue:transaction.payment.applicationUsername?:@"" forKey:@"applicationUsername"];
+    [errorMaps setValue:transaction.payment.productIdentifier?:@"" forKey:@"productIdentifier"];
+    return errorMaps;
+}
+
 @interface FGIAPService () <SKPaymentTransactionObserver, SKRequestDelegate>
 /// 保存内购成功但校验失败未finish的Transaction，用于重新获取票据，以及轮询重试
 @property (nonatomic, strong) NSMutableDictionary <NSString *,FGIAPTransaction *>*transactionMaps;
@@ -62,23 +71,6 @@
     }
 }
 
-- (void)verifyServerTradeReult:(NSString *)tradeNo complete:(nonnull FGIAPVerifyTransactionBlock)handler{
-    
-    __block BOOL exist = NO;
-    [self.transactionMaps enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, FGIAPTransaction * _Nonnull obj, BOOL * _Nonnull stop) {
-        if (!obj.handle) exist = YES;
-    }];
-    if (exist) {
-        [self _verifyTrade:tradeNo handler:handler];
-    }else if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(checkTradeReult:complete:)]) {
-        [self.verifyTransaction checkTradeReult:tradeNo complete:^(NSString * _Nonnull message, FGIAPVerifyTransactionRusult result) {
-            if (handler) handler(message, result);
-        }];
-    }else{
-        if (handler) handler(@"verifyTransaction不存在", FGIAPManagerVerifyRusultFail);
-    }
-}
-
 - (void)clear{
     [self.repeatTimer invalidate];
     self.repeatTimer = nil;
@@ -127,15 +119,10 @@
 
 - (void)completeTransaction:(SKPaymentTransaction *)transaction retryWhenreceiptURLisEmpty:(BOOL)retry{
     FGLog(@"@@## %s %@ %@", __func__, transaction.transactionIdentifier, transaction.payment.applicationUsername);
-    
-    /// 服务器订单ID
+        
     NSString *tradeNo  = [self _tradeNoOfTransaction:transaction];
     
-    NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
-    [errorMaps setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
-    [errorMaps setValue:transaction.payment.applicationUsername?:@"" forKey:@"applicationUsername"];
-    [errorMaps setValue:transaction.payment.productIdentifier?:@"" forKey:@"productIdentifier"];
-    [errorMaps setValue:retry?@"1":@"0" forKey:@"retry"];
+    NSMutableDictionary *errorMaps = FGIAPServiceErrorMapsFromTransaction(transaction);
     [errorMaps setValue:tradeNo?:@"" forKey:@"tradeNo"];
 
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
@@ -161,7 +148,6 @@
             SKReceiptRefreshRequest *receiptRefreshRequest = [[SKReceiptRefreshRequest alloc] initWithReceiptProperties:@{@"transaction":transaction}];
             receiptRefreshRequest.delegate = self;
             [receiptRefreshRequest start];
-            FGLog(@"@@## 重新请求票据信息");
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
         }else{
             m_transction.handle = NO;
@@ -170,13 +156,6 @@
             [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultFail message:@"无法获取票据"];
         }
     }
-}
-
-- (void)_showAlert:(NSString *)message{
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil];
-    [alertController addAction:action];
-    [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
 
 
@@ -208,15 +187,10 @@
                             wSelf.buyProductCompleteBlock(requestErr.description, result);
                         }
                     }
-                    NSMutableDictionary *paras = [NSMutableDictionary dictionary];
+                    NSMutableDictionary *paras = FGIAPServiceErrorMapsFromTransaction(transaction);
                     [paras setValue:tradeNo forKey:@"tradeNo"];
                     [paras setValue:cancel?@"CANCEL":@"FAIL" forKey:@"payResult"];
-                    [paras setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
-                    
-                    NSMutableDictionary *ErrorMaps = [NSMutableDictionary dictionaryWithDictionary:paras];
-                    [ErrorMaps setValue:requestErr.description?:@"" forKey:@"requestErr"];
-                    [ErrorMaps setValue:@(requestErr.code) forKey:@"requestErrCode"];
-                    [wSelf p_uploadErrorMaps:FGIAPServiceErrorTypeVerifyTradeFail parms:ErrorMaps];
+                    [wSelf p_uploadErrorMaps:FGIAPServiceErrorTypeVerifyTradeFail parms:paras];
                 }
             }];
         }
@@ -233,12 +207,7 @@
         if (transaction) {
             [self completeTransaction:transaction retryWhenreceiptURLisEmpty:NO];
         }else{
-            NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
-            [errorMaps setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
-            [errorMaps setValue:transaction.payment.applicationUsername?:@"" forKey:@"applicationUsername"];
-            [errorMaps setValue:transaction.payment.productIdentifier?:@"" forKey:@"productIdentifier"];
-            [errorMaps setValue:@"重新请求票据信息 成功 但定位不到对应的事务" forKey:@"event"];
-            [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
+            [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
         }
     }
 }
@@ -247,13 +216,7 @@
     if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
         SKReceiptRefreshRequest *RefreshRequest = (SKReceiptRefreshRequest *)request;
         SKPaymentTransaction *transaction = [RefreshRequest.receiptProperties valueForKey:@"transaction"];
-        
-        NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
-        [errorMaps setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
-        [errorMaps setValue:transaction.payment.applicationUsername?:@"" forKey:@"applicationUsername"];
-        [errorMaps setValue:transaction.payment.productIdentifier?:@"" forKey:@"productIdentifier"];
-        [errorMaps setValue:@"重新请求票据信息 失败" forKey:@"event"];
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
+        [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
     }
 }
 
@@ -263,33 +226,10 @@
 - (NSString *)_tradeNoOfTransaction:(SKPaymentTransaction *)transaction{
     __block NSString *tradeNo = nil;
     
-    NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
-    [errorMaps setValue:transaction.transactionIdentifier?:@"" forKey:@"transactionIdentifier"];
-    [errorMaps setValue:transaction.payment.applicationUsername?:@"" forKey:@"applicationUsername"];
-    [errorMaps setValue:transaction.payment.productIdentifier?:@"" forKey:@"productIdentifier"];
-
-    /// 主要是要保证 orderId和对应的 receiptData能够上传给服务器做校验
     if ([transaction.payment.applicationUsername FG_isNSStringAndNotEmpty]) {
         tradeNo = transaction.payment.applicationUsername;
-        FGLog(@"@@## 读取applicationUsername中的orderID");
     }else{
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeApplicationUsernameNoNotExist parms:errorMaps];
-    }
-
-    /// 如果漏单在重新校验的过程中tradeNo丢失，尝试读取maps中的缓存
-    /// fix:这个步骤，可以来解决 FGIAPProductKeyChainStore 每次获取到的tradeNo不同的问题
-    if (![tradeNo FG_isNSStringAndNotEmpty]){
-        if ([transaction.transactionIdentifier FG_isNSStringAndNotEmpty]) {
-            [self.transactionMaps enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, FGIAPTransaction * _Nonnull obj, BOOL * _Nonnull stop) {
-                if ([obj.transaction.transactionIdentifier isEqualToString:transaction.transactionIdentifier]) {
-                    tradeNo = key;
-                    *stop = YES;
-                    FGLog(@"@@## 读取transactionMaps中的缓存orderID");
-                }
-            }];
-        }else{
-            [self p_uploadErrorMaps:FGIAPServiceErrorTypeTransactionIdNoNotExist parms:errorMaps];
-        }
+        [self p_uploadErrorMaps:FGIAPServiceErrorTypeApplicationUsernameNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
     }
     
     /// 无法根据transaction获取订单，只要productIdentifier一致就直接取出来使用
@@ -297,13 +237,12 @@
         NSString *storeTradeNo = [self.productStore requestOneOrderWithProduct:transaction.payment.productIdentifier];
         if ([storeTradeNo FG_isNSStringAndNotEmpty]) {
             tradeNo = storeTradeNo;
-            FGLog(@"@@## 读取ProductKeyChainStore中的缓存orderID");
         }else{
-            [self p_uploadErrorMaps:FGIAPServiceErrorTypeProductStoreNoNotExist parms:errorMaps];
+            [self p_uploadErrorMaps:FGIAPServiceErrorTypeProductStoreNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
         }
     }
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeTradeNoNotExist parms:errorMaps];
+        [self p_uploadErrorMaps:FGIAPServiceErrorTypeTradeNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
     }
     return tradeNo;
 }
@@ -317,15 +256,15 @@
         iap.handle = NO;
     }
     
-    /// 苹果扣款成功，但是验签接口失败了 不能直接结束，需要重新校验
-    if (result != FGIAPManagerPurchaseRusultHalfSuccess) {
+    if (result == FGIAPManagerPurchaseRusultHalfSuccess) {
+        /// 苹果扣款成功，但是验签接口失败了  不能直接finishTransaction，需要重新校验
+    }else{
         if (transaction) {
             [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
         }
         if ([tradeNo FG_isNSStringAndNotEmpty]) {
             /// 校验成功后移除
             [self.transactionMaps removeObjectForKey:tradeNo];
-            /// 校验成功后移除
             [self.productStore removeOrder:tradeNo];
         }
     }
@@ -354,7 +293,7 @@
     
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         if (handler) {
-            handler(@"orderId不存在", FGIAPManagerVerifyRusultFail);
+            handler(@"tradeNo不存在", FGIAPManagerVerifyRusultFail);
         }
         return;
     }
@@ -362,7 +301,6 @@
     WS(wSelf);
     if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushSuccessTradeReultToServer:receipt:transaction:complete:)]) {
         [self.verifyTransaction pushSuccessTradeReultToServer:tradeNo receipt:receipt transaction:iap.transaction complete:^(NSString * _Nonnull message, NSError * _Nullable requestErr) {
-            /// 订单提交无效，需要删除本地的订单
             if (requestErr.code == FGIAPServerOverdueErrorCode) {
                 [wSelf.productStore removeOrder:tradeNo];
             }
@@ -383,9 +321,44 @@
     }];
 }
 
+- (void)_showAlert:(NSString *)message{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil];
+    [alertController addAction:action];
+    [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertController animated:YES completion:nil];
+}
+
+
 - (void)p_uploadErrorMaps:(FGIAPServiceErrorType)error parms:(NSDictionary *)parms{
+    NSString *typeString = nil;
+    switch (error) {
+        case FGIAPServiceErrorTypeTradeNoNotExist:
+            typeString = @"找不到匹配的订单号";
+            break;
+        case FGIAPServiceErrorTypeApplicationUsernameNoNotExist:
+            typeString = @"找不到匹配的applicationUsername";
+            break;
+        case FGIAPServiceErrorTypeProductStoreNoNotExist:
+            typeString = @"本地存储找不到匹配的orderId";
+            break;
+        case FGIAPServiceErrorTypeReceiptNoNotExist:
+            typeString = @"找不到匹配的票据数据";
+            break;
+        case FGIAPServiceErrorTypeReReceiptNoNotExist:
+            typeString = @"重新获取，还是找不到匹配的票据数据";
+            break;
+        case FGIAPServiceErrorTypeVerifyTradeFail:
+            typeString = @"提交验证票据，抛出失败";
+            break;
+        default:
+            typeString = @"未知";
+            break;
+    }
+    NSMutableDictionary *logStatistics = [NSMutableDictionary dictionaryWithDictionary:parms];
+    [logStatistics setValue:typeString forKey:@"typeString"];
+    FGLog(@"@@## p_uploadErrorMaps: %@", logStatistics);
     if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushServiceErrorLogStatistics:error:)]) {
-        [self.verifyTransaction pushServiceErrorLogStatistics:parms error:error];
+        [self.verifyTransaction pushServiceErrorLogStatistics:logStatistics error:error];
     }
 }
 

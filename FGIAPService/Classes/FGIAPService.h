@@ -32,13 +32,6 @@ typedef void(^FGIAPManagerBuyBlock)(NSString *message, FGIAPManagerPurchaseRusul
 /// @param completion 支付回调
 - (void)buyProduct:(SKProduct *)product tradeNo:(NSString *)tradeNo onCompletion:(FGIAPManagerBuyBlock)completion;
 
-
-/// 查询FGIAPManagerPurchaseRusultHalfSuccess状态的订单，可以通过这个方法重新post服务器，检验工单状态。其他状态建议走 <FGIAPVerifyTransaction>
-/// @param  tradeNo 订单号
-/// @param handler 查询回调
-- (void)verifyServerTradeReult:(NSString *)tradeNo complete:(FGIAPVerifyTransactionBlock)handler;
-
-
 /// 清除FGIAPService事务
 - (void)clear;
 

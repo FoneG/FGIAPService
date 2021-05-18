@@ -8,7 +8,7 @@
 #ifndef FGIAPServiceUtility_h
 #define FGIAPServiceUtility_h
 
-//#define MRDEBUG
+#define FGDEBUG
 
 #if defined (FGDEBUG) && defined (DEBUG)
     #define FGLog(...) NSLog(__VA_ARGS__)
@@ -17,6 +17,6 @@
 #endif
 
 #define WS(wSelf) __weak typeof(self) wSelf = self
-#define FGIAPServerOverdueErrorCode 11000007
+#define FGIAPServerOverdueErrorCode 11000007 //预留code：订单提交无效，需要删除本地的订单
 
 #endif /* FGIAPServiceUtility_h */
