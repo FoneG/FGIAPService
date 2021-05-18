@@ -48,5 +48,5 @@ pod 'FGIAPService'
 
 
 # 问题交流
-如果大家发现bug，请在GitHub提issue
+如果大家发现bug，请在GitHub提issue    
 好用的话，请路过的朋友们给点个star 🙏🙏🙏🙏🙏

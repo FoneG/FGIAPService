@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'FGIAPService'
-  s.version          = '0.3.0'
+  s.version          = '0.4.0'
   s.summary          = 'IAP helper for Apple in app purchases.'
   s.description      = <<-DESC
                             FGIAPService is a simple wrapper for Apple in app purchases..

@@ -373,7 +373,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     }
     NSMutableDictionary *logStatistics = [NSMutableDictionary dictionaryWithDictionary:parms];
     [logStatistics setValue:typeString forKey:@"typeString"];
-    FGLog(@"@@## p_uploadErrorMaps: %@", logStatistics);
+    FGLog(@"@@## serviceError: %@", typeString);
     if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushServiceErrorLogStatistics:error:)]) {
         [self.verifyTransaction pushServiceErrorLogStatistics:logStatistics error:error];
     }
