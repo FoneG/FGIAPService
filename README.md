@@ -12,8 +12,9 @@ pod 'FGIAPService'
 # FGIAPService 解决的问题
 * 窜单（订单映射）
 * 漏单
-* 票据验证
-* 票据丢失
+* 账号切换
+* apple验证
+* 票据异常
 * 数据丢失
 * ...
 
