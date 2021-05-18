@@ -63,6 +63,10 @@ typedef void(^FGIAPVerifyTransactionPushCallBack)(NSString *message,  NSError * 
 /// @param logStatistics 日志
 - (void)pushServiceErrorLogStatistics:(NSDictionary *)logStatistics error:(FGIAPServiceErrorType)error;
 
+/// 需要手动处理的事件
+/// @param message 日志
+- (void)touchNeedManuallyResolvedEvent:(NSString *)message;
+
 @end
 
 NS_ASSUME_NONNULL_END

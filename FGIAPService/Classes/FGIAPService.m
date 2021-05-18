@@ -127,7 +127,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         [self _showAlert:@"无法获取订单号，如果存在支付异常，请尝试重启APP或者联系客服"];
-        [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultFail message:@"无法获取订单号"];
+        [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取订单号"];
     }else{
         /// fix：用于漏单轮询重试
         FGIAPTransaction *m_transction = [[FGIAPTransaction alloc] init];
@@ -153,7 +153,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
             m_transction.handle = NO;
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReReceiptNoNotExist parms:errorMaps];
             [self _showAlert:@"无法获取票据，如果存在支付异常，请尝试重启APP或者联系客服"];
-            [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultFail message:@"无法获取票据"];
+            [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取票据"];
         }
     }
 }
@@ -225,7 +225,6 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 
 - (NSString *)_tradeNoOfTransaction:(SKPaymentTransaction *)transaction{
     __block NSString *tradeNo = nil;
-    
     if ([transaction.payment.applicationUsername FG_isNSStringAndNotEmpty]) {
         tradeNo = transaction.payment.applicationUsername;
     }else{
@@ -269,8 +268,8 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         }
     }
     
-    BOOL exist = [tradeNo isEqualToString:self.handleTradeNo];
-    if (exist) {
+    BOOL finish = ![tradeNo FG_isNSStringAndNotEmpty] || [tradeNo isEqualToString:self.handleTradeNo];
+    if (finish) {
         self.handleTradeNo = nil;
         if (self.buyProductCompleteBlock) {
             self.buyProductCompleteBlock(msg, result);
@@ -323,7 +322,11 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 
 - (void)_showAlert:(NSString *)message{
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(touchNeedManuallyResolvedEvent:)]) {
+            [self.verifyTransaction touchNeedManuallyResolvedEvent:message];
+        }
+    }];
     [alertController addAction:action];
     [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
