@@ -11,6 +11,7 @@
 #import "FGIAPServiceUtility.h"
 #import "NSObject+FGIsNullOrEmpty.h"
 
+static NSTimeInterval FGIAPServiceTradeVerifyInterval = 10.0f;
 
 static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTransaction *transaction) {
     NSMutableDictionary *errorMaps = [NSMutableDictionary dictionary];
@@ -21,12 +22,11 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 }
 
 @interface FGIAPService () <SKPaymentTransactionObserver, SKRequestDelegate>
-/// 保存内购成功但校验失败未finish的Transaction，用于重新获取票据，以及轮询重试
 @property (nonatomic, strong) NSMutableDictionary <NSString *,FGIAPTransaction *>*transactionMaps;
 @property (nonatomic, strong) id<FGIAPVerifyTransaction> verifyTransaction;
 @property (nonatomic, copy) FGIAPManagerBuyBlock buyProductCompleteBlock;
-@property (nonatomic, strong) NSString *handleTradeNo;
 @property (nonatomic, strong) FGIAPKeyChainStoreHelper *productStore;
+@property (nonatomic, strong) NSString *handleTradeNo;
 @property (nonatomic, strong) NSTimer *repeatTimer;
 
 @end
@@ -41,7 +41,6 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         _productStore = [[FGIAPKeyChainStoreHelper alloc] init];
         [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
         
-        NSTimeInterval FGIAPServiceTradeVerifyInterval = 10.0f;
         _repeatTimer = [NSTimer timerWithTimeInterval:FGIAPServiceTradeVerifyInterval target:self selector:@selector(_reVerify) userInfo:nil repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:_repeatTimer forMode:NSRunLoopCommonModes];
         [_repeatTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:FGIAPServiceTradeVerifyInterval]];
@@ -59,7 +58,6 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     if ([product.productIdentifier FG_isNSStringAndNotEmpty] && [tradeNo FG_isNSStringAndNotEmpty]) {
         self.handleTradeNo = tradeNo;
         self.buyProductCompleteBlock = completion;
-        /// 用于applicationUsername、transactionIdentifier为空情况的处理
         [self.productStore update:tradeNo product:product.productIdentifier];
         SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
         payment.applicationUsername = tradeNo;
@@ -72,8 +70,8 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 }
 
 - (void)clear{
-    [self.repeatTimer invalidate];
-    self.repeatTimer = nil;
+    [self.transactionMaps removeAllObjects];
+    [self.productStore removeALLOrder];
 }
 
 #pragma mark - SKPaymentTransactionObserver
@@ -81,7 +79,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 - (void)paymentQueue:(SKPaymentQueue *)queue removedTransactions:(NSArray<SKPaymentTransaction *> *)transactions{
     FGLog(@"@@## %s %ld", __func__, [SKPaymentQueue defaultQueue].transactions.count);
     if (![[SKPaymentQueue defaultQueue].transactions FG_isNSArrayAndNotEmpty]) {
-        [self.productStore removeALLOrder];
+        [self clear];
     }
 }
 
@@ -124,25 +122,21 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     
     NSMutableDictionary *errorMaps = FGIAPServiceErrorMapsFromTransaction(transaction);
     [errorMaps setValue:tradeNo?:@"" forKey:@"tradeNo"];
-
+    
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         [self _showAlert:@"无法获取订单号，如果存在支付异常，请尝试重启APP或者联系客服"];
         [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取订单号"];
     }else{
-        /// fix：用于漏单轮询重试
-        FGIAPTransaction *m_transction = [[FGIAPTransaction alloc] init];
-        m_transction.transaction = transaction;
-        m_transction.handle = YES;
-        [self.transactionMaps setValue:m_transction forKey:tradeNo];
-
-        // 从沙盒中获取到购买凭据
-        // 取receipt的时候要判空，如果文件不存在，就要从苹果服务器重新刷新下载receipt了。
+        FGIAPTransaction *transction = [self.transactionMaps valueForKey:tradeNo];
+        if (!transction) {
+            transction = [self insertTrade:tradeNo withTransaction:transction];
+        }
         NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
         if ([[NSFileManager defaultManager] fileExistsAtPath:receiptURL.path]) {
             
             NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
             NSString *receiptDataText = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-            m_transction.receipt = receiptDataText;
+            transction.receipt = receiptDataText;
             [self _verifyTrade:tradeNo handler:nil];
         }else if (retry){
             SKReceiptRefreshRequest *receiptRefreshRequest = [[SKReceiptRefreshRequest alloc] initWithReceiptProperties:@{@"transaction":transaction}];
@@ -150,12 +144,25 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
             [receiptRefreshRequest start];
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
         }else{
-            m_transction.handle = NO;
+            transction.handle = NO;
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReReceiptNoNotExist parms:errorMaps];
             [self _showAlert:@"无法获取票据，如果存在支付异常，请尝试重启APP或者联系客服"];
             [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取票据"];
         }
     }
+}
+
+- (FGIAPTransaction *)insertTrade:(NSString *)trade withTransaction:(FGIAPTransaction *)transaction{
+    FGIAPTransaction *transction = [[FGIAPTransaction alloc] init];
+    transction.transaction = transaction;
+    transction.handle = YES;
+    [self.transactionMaps setValue:transction forKey:trade];
+    @synchronized(self) {
+        if (([self.repeatTimer.fireDate timeIntervalSince1970] - [[NSDate date] timeIntervalSince1970]) > FGIAPServiceTradeVerifyInterval) {
+            [self.repeatTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:FGIAPServiceTradeVerifyInterval]];
+        }
+    }
+    return transction;
 }
 
 
@@ -231,7 +238,6 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         [self p_uploadErrorMaps:FGIAPServiceErrorTypeApplicationUsernameNoNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
     }
     
-    /// 无法根据transaction获取订单，只要productIdentifier一致就直接取出来使用
     if (![tradeNo FG_isNSStringAndNotEmpty]) {
         NSString *storeTradeNo = [self.productStore requestOneOrderWithProduct:transaction.payment.productIdentifier];
         if ([storeTradeNo FG_isNSStringAndNotEmpty]) {
@@ -256,13 +262,12 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     }
     
     if (result == FGIAPManagerPurchaseRusultHalfSuccess) {
-        /// 苹果扣款成功，但是验签接口失败了  不能直接finishTransaction，需要重新校验
+        /// 苹果扣款成功，但是验签接口失败了  不能直接finishTransaction，需要轮询校验
     }else{
         if (transaction) {
             [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
         }
         if ([tradeNo FG_isNSStringAndNotEmpty]) {
-            /// 校验成功后移除
             [self.transactionMaps removeObjectForKey:tradeNo];
             [self.productStore removeOrder:tradeNo];
         }
@@ -313,11 +318,20 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 }
 
 - (void)_reVerify{
+    NSLog(@"%s", __func__);
+    __block NSString *verifyTradeNo = nil;
     [self.transactionMaps enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, FGIAPTransaction * _Nonnull obj, BOOL * _Nonnull stop) {
         if (!obj.handle) {
-            [self _verifyTrade:key handler:nil];
+            verifyTradeNo = key;
         }
     }];
+    if ([verifyTradeNo FG_isNSStringAndNotEmpty]) {
+        [self _verifyTrade:verifyTradeNo handler:nil];
+    }else{
+        @synchronized(self) {
+            [self.repeatTimer setFireDate:[NSDate distantFuture]];
+        }
+    }
 }
 
 - (void)_showAlert:(NSString *)message{

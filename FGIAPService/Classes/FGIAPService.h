@@ -32,9 +32,6 @@ typedef void(^FGIAPManagerBuyBlock)(NSString *message, FGIAPManagerPurchaseRusul
 /// @param completion 支付回调
 - (void)buyProduct:(SKProduct *)product tradeNo:(NSString *)tradeNo onCompletion:(FGIAPManagerBuyBlock)completion;
 
-/// 清除FGIAPService事务
-- (void)clear;
-
 @end
 
 
