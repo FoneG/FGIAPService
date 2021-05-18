@@ -127,16 +127,16 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         [self _showAlert:@"无法获取订单号，如果存在支付异常，请尝试重启APP或者联系客服"];
         [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取订单号"];
     }else{
-        FGIAPTransaction *transction = [self.transactionMaps valueForKey:tradeNo];
-        if (!transction) {
-            transction = [self insertTrade:tradeNo withTransaction:transction];
+        FGIAPTransaction *tran = [self.transactionMaps valueForKey:tradeNo];
+        if (!tran) {
+            tran = [self insertTrade:tradeNo withTransaction:transaction];
         }
         NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
         if ([[NSFileManager defaultManager] fileExistsAtPath:receiptURL.path]) {
             
             NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
             NSString *receiptDataText = [receiptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-            transction.receipt = receiptDataText;
+            tran.receipt = receiptDataText;
             [self _verifyTrade:tradeNo handler:nil];
         }else if (retry){
             SKReceiptRefreshRequest *receiptRefreshRequest = [[SKReceiptRefreshRequest alloc] initWithReceiptProperties:@{@"transaction":transaction}];
@@ -144,7 +144,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
             [receiptRefreshRequest start];
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNoNotExist parms:errorMaps];
         }else{
-            transction.handle = NO;
+            tran.handle = NO;
             [self p_uploadErrorMaps:FGIAPServiceErrorTypeReReceiptNoNotExist parms:errorMaps];
             [self _showAlert:@"无法获取票据，如果存在支付异常，请尝试重启APP或者联系客服"];
             [self _finishTransaction:transaction result:FGIAPManagerPurchaseRusultHalfSuccess message:@"无法获取票据"];
@@ -153,16 +153,16 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 }
 
 - (FGIAPTransaction *)insertTrade:(NSString *)trade withTransaction:(FGIAPTransaction *)transaction{
-    FGIAPTransaction *transction = [[FGIAPTransaction alloc] init];
-    transction.transaction = transaction;
-    transction.handle = YES;
-    [self.transactionMaps setValue:transction forKey:trade];
+    FGIAPTransaction *tran = [[FGIAPTransaction alloc] init];
+    tran.transaction = transaction;
+    tran.handle = YES;
+    [self.transactionMaps setValue:tran forKey:trade];
     @synchronized(self) {
         if (([self.repeatTimer.fireDate timeIntervalSince1970] - [[NSDate date] timeIntervalSince1970]) > FGIAPServiceTradeVerifyInterval) {
             [self.repeatTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:FGIAPServiceTradeVerifyInterval]];
         }
     }
-    return transction;
+    return tran;
 }
 
 
