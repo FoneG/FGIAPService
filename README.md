@@ -1,3 +1,10 @@
+# FGIAPService
+
+[![CI Status](https://img.shields.io/travis/15757127193@163.com/FGIAPService.svg?style=flat)](https://travis-ci.org/15757127193@163.com/FGIAPService)
+[![Version](https://img.shields.io/cocoapods/v/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
+[![License](https://img.shields.io/cocoapods/l/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
+[![Platform](https://img.shields.io/cocoapods/p/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
+
 ## 说明
 
 一套用于解决苹果IAP的解决方案，适用于希望自己架设服务器进行验证的开发者, 能够非常简单快速地接入到项目中
