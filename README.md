@@ -5,8 +5,6 @@
 [![License](https://img.shields.io/cocoapods/l/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
 [![Platform](https://img.shields.io/cocoapods/p/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
 
-## 说明
-
 一套用于解决苹果IAP的解决方案，适用于希望自己架设服务器进行验证的开发者, 能够非常简单快速地接入到项目中
 
 [更详细的介绍](https://note.youdao.com/ynoteshare1/index.html?id=47a9aacd3372867c15b8a3d4ff37d75d&type=note)
@@ -62,6 +60,6 @@
 ```
 
 
-# 问题交流
-如果大家发现bug，请在GitHub提issue    
+## 问题交流
+如果大家发现bug或者需求，请在GitHub提issue    
 好用的话，请路过的朋友们给点个star 🙏🙏🙏🙏🙏
