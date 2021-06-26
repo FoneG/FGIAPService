@@ -7,7 +7,7 @@
 
 一套用于解决苹果IAP的解决方案，适用于希望自己架设服务器进行验证的开发者, 能够非常简单快速地接入到项目中
 
-[更详细的介绍](https://note.youdao.com/ynoteshare1/index.html?id=47a9aacd3372867c15b8a3d4ff37d75d&type=note)
+[更详细的介绍](https://juejin.cn/post/6963969762703605791)
 
 ## 已解决问题
 - 窜单（订单映射）
