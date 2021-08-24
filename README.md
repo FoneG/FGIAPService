@@ -66,6 +66,6 @@
 
 
 
-## 友情分享 [FGPopupScheduler](https://github.com/FoneG/FGPopupScheduler)
+## 友情分享 
 
-✨ ✨ ✨ ✨ iOS弹窗调用器，控制弹窗按照指定的策略进行显示。Helps you control popups easily. ✨ ✨ ✨ ✨
+[FGPopupScheduler](https://github.com/FoneG/FGPopupScheduler)：✨ ✨ ✨ ✨ iOS弹窗调用器，控制弹窗按照指定的策略进行显示。Helps you control popups easily. ✨ ✨ ✨ ✨
