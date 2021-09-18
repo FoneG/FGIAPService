@@ -39,7 +39,7 @@
 ### 基本使用
 ```
 
-配置服务器校验代理对象
+1. 配置服务器校验代理对象
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     ···
     [[FGIAPManager shared] setConfigureWith: id<FGIAPVerifyTransaction>];
@@ -47,12 +47,12 @@
     ···
 }
 
-通过productId获取苹果商品列表
+2. 通过productId获取苹果商品列表
 [[[FGIAPProductsFilter alloc] init] requestProductsWith:[[NSSet alloc] initWithArray:@[product.productId]] completion:^(NSArray<SKProduct *> * _Nonnull products) {
     ///
 }];
 
-通过商品信息和对应的tradeNo进行支付
+3. 通过商品信息和对应的tradeNo进行支付
 [[FGIAPManager shared].FGIAPService buyProduct:product tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) {
     ///        
 }];
