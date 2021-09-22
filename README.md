@@ -37,26 +37,35 @@
 ## 用法
 
 ### 基本使用
+
+在已经申请消耗性商品的前提下，只需要通过3个步骤就能简单使用`FGIAPService`完成消耗性商品的购买
+
+##### 1. 配置服务器校验代理对象
+
+需要配置一个遵守<FGIAPVerifyTransaction>协议的对象，来完成跟服务器订单状态同步，需要在APP一启动的时候就开始配置。
+```
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    [[FGIAPManager shared] setConfigureWith: id<FGIAPVerifyTransaction>];
+    
+}
 ```
 
-1. 配置服务器校验代理对象
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    ···
-    [[FGIAPManager shared] setConfigureWith: id<FGIAPVerifyTransaction>];
 
-    ···
-}
+##### 2. 通过苹果商品列表
 
-2. 通过productId获取苹果商品列表
-[[[FGIAPProductsFilter alloc] init] requestProductsWith:[[NSSet alloc] initWithArray:@[product.productId]] completion:^(NSArray<SKProduct *> * _Nonnull products) {
-    ///
-}];
+初始化一个FGIAPProductsFilter对象来获取SKProduct列表
+```
+FGIAPProductsFilter *filter = [[FGIAPProductsFilter alloc] init];
 
-3. 通过商品信息和对应的tradeNo进行支付
-[[FGIAPManager shared].FGIAPService buyProduct:product tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) {
-    ///        
-}];
+[filter requestProductsWith:[[NSSet alloc] initWithArray:@[product.productId]] completion:^(NSArray<SKProduct *> * _Nonnull products) { }];
+```
 
+##### 3. 支付购买
+
+FGIAPService会将服务器下发的tradeNo和SKProduct进行绑定，完成商品的支付并返回支付结果
+```
+[[FGIAPManager shared].iap buyProduct:product tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
 ```
 
 
@@ -68,4 +77,4 @@
 
 ## 友情分享 
 
-[FGPopupScheduler](https://github.com/FoneG/FGPopupScheduler)：✨ ✨ ✨ ✨ iOS弹窗调用器，控制弹窗按照指定的策略进行显示。Helps you control popups easily. ✨ ✨ ✨ ✨
+[FGPopupScheduler](https://github.com/FoneG/FGPopupScheduler)：     ✨ ✨ ✨ ✨ iOS弹窗调用器，控制弹窗按照指定的策略进行显示。Helps you control popups easily. ✨ ✨ ✨ ✨
