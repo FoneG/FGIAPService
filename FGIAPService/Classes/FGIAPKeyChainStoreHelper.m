@@ -145,7 +145,7 @@ static NSString *FGIAPProductKeyChainStoreService = @"__FGIAPProductKeyChainStor
     return [NSJSONSerialization dataWithJSONObject:data options:kNilOptions error:nil];;
 }
 
-- (void)setJsonData:(NSDictionary *)jsonObject{
+- (void)setJsonData:(NSData *)jsonObject{
     NSError *err;
     NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:jsonObject
                                                         options:NSJSONReadingMutableContainers

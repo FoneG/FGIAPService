@@ -152,7 +152,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     }
 }
 
-- (FGIAPTransaction *)insertTrade:(NSString *)trade withTransaction:(FGIAPTransaction *)transaction{
+- (FGIAPTransaction *)insertTrade:(NSString *)trade withTransaction:(SKPaymentTransaction *)transaction{
     FGIAPTransaction *tran = [[FGIAPTransaction alloc] init];
     tran.transaction = transaction;
     tran.handle = YES;

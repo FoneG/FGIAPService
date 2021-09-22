@@ -26,7 +26,7 @@
 }
 - (IBAction)buy:(id)sender {
     
-    NSString *productId = @"替换成申请的productId";
+    NSString *productId = @"com.enjoytech.maltbaby.dooluu6";
     NSString *tradeNo = @"替换成后台给的tradeNo";
     
     /// 2.获取商品信息
