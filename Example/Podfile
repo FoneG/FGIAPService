@@ -5,9 +5,10 @@ platform :ios, '9.0'
 target 'FGIAPService_Example' do
   pod 'FGIAPService', :path => '../'
 
+  pod 'Toast' , '4.0.0'
+
   target 'FGIAPService_Tests' do
     inherit! :search_paths
-
     
   end
 end

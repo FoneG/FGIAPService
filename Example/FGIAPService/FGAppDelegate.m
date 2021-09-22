@@ -7,6 +7,8 @@
 //
 
 #import "FGAppDelegate.h"
+#import "FGIAPVerifyTransactionObj.h"
+#import <FGIAPService/FGIAPManager.h>
 
 @implementation FGAppDelegate
 
@@ -14,9 +16,8 @@
 {
     // Override point for customization after application launch.
     
-    // 配置内购服务
-    
-    
+    // 1. 配置内购服务
+    [[FGIAPManager shared] setConfigureWith:[FGIAPVerifyTransactionObj new]];
     return YES;
 }
 
