@@ -13,18 +13,9 @@
 - (void)pushSuccessTradeReultToServer:(NSString *)receipt transaction:(SKPaymentTransaction *)transaction complete:(FGIAPVerifyTransactionPushCallBack)handler{
     NSLog(@"%s receipt: %@", __func__ , receipt);
     if (handler) {
-//        handler(@"校验订单成功", [NSError errorWithDomain:@"FGIAPVerifyTransactionObj" code:400 userInfo:nil]);
         handler(@"Success", nil);
     }
 }
-
-- (void)pushFailTradeReultToServer:(NSString *)tradeNo cancel:(BOOL)userCancelled transaction:(nonnull SKPaymentTransaction *)transaction complete:(nonnull FGIAPVerifyTransactionPushCallBack)handler{
-    NSLog(@"%s", __func__);
-    if (handler) {
-        handler(@"Failure", nil);
-    }
-}
-
 
 - (void)pushServiceErrorLogStatistics:(NSDictionary *)logStatistics error:(FGIAPServiceErrorType)error{
     
