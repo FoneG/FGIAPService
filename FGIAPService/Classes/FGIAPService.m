@@ -87,7 +87,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
                 break;
             case SKPaymentTransactionStateFailed:
                 FGLog(@"Failure of commodity transaction");
-                [self failedTransaction:transaction];
+                [self failedTransaction:transaction withError:FGIAPServiceErrorTypeNone];
                 break;
             case SKPaymentTransactionStateDeferred:
                 FGLog(@"Merchandise is suspended");
@@ -104,13 +104,36 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 }
 
 
+#pragma mark - SKRequestDelegate
+
+- (void)requestDidFinish:(SKRequest *)request{
+    if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
+        SKReceiptRefreshRequest *RefreshRequest = (SKReceiptRefreshRequest *)request;
+        SKPaymentTransaction *transaction = [RefreshRequest.receiptProperties valueForKey:@"transaction"];
+        if (transaction) {
+            [self completeTransaction:transaction retryWhenreceiptURLisEmpty:NO];
+        }else{
+            [self failedTransaction:transaction withError:FGIAPServiceErrorTypeReceiptNotExist];
+        }
+    }
+}
+
+- (void)request:(SKRequest *)request didFailWithError:(nonnull NSError *)error{
+    if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
+        SKReceiptRefreshRequest *RefreshRequest = (SKReceiptRefreshRequest *)request;
+        SKPaymentTransaction *transaction = [RefreshRequest.receiptProperties valueForKey:@"transaction"];
+        [self failedTransaction:transaction withError:FGIAPServiceErrorTypeReceiptNotExist];
+    }
+}
+
+
+#pragma mark - private method
+
 - (void)completeTransaction:(SKPaymentTransaction *)transaction retryWhenreceiptURLisEmpty:(BOOL)retry{
     FGLog(@"%s %@ %@", __func__, transaction.transactionIdentifier, transaction.originalTransaction.transactionIdentifier);
             
-    NSMutableDictionary *errorMaps = FGIAPServiceErrorMapsFromTransaction(transaction);
-    
     if (![transaction.transactionIdentifier isNSStringAndNotEmpty]) {
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeTransactionIdentifierNotExist parms:errorMaps];
+        [self failedTransaction:transaction withError:FGIAPServiceErrorTypeTransactionIdentifierNotExist];
         return;
     }
     
@@ -128,48 +151,35 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         [receiptRefreshRequest start];
         
     }else{
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNotExist parms:errorMaps];
+        [self failedTransaction:transaction withError:FGIAPServiceErrorTypeReceiptNotExist];
     }
 }
 
 
-- (void)failedTransaction:(SKPaymentTransaction *)transaction {
+- (void)failedTransaction:(SKPaymentTransaction *)transaction withError:(FGIAPServiceErrorType)error{
     FGLog(@"%s Transaction error:%@ code:%ld", __func__, transaction.error.localizedDescription, transaction.error.code);
-
-    if ([SKPaymentQueue defaultQueue]) {
+    
+    BOOL finish = error == FGIAPServiceErrorTypeNone;
+    
+    if (finish && [SKPaymentQueue defaultQueue]) {
         [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
     }
     
+    NSMutableDictionary *logStatistics = [NSMutableDictionary dictionaryWithDictionary:FGIAPServiceErrorMapsFromTransaction(transaction)];
+    if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushServiceErrorLogStatistics:error:)]) {
+        [self.verifyTransaction pushServiceErrorLogStatistics:logStatistics error:error];
+    }
+    
     if (_buyProductCompleteBlock) {
-        _buyProductCompleteBlock(transaction.error.localizedDescription, transaction.error.code == SKErrorPaymentCancelled ? FGIAPManagerPurchaseRusultCancel : FGIAPManagerPurchaseRusultFail);
-    }
-}
-
-
-#pragma mark - SKRequestDelegate
-
-- (void)requestDidFinish:(SKRequest *)request{
-    if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
-        SKReceiptRefreshRequest *RefreshRequest = (SKReceiptRefreshRequest *)request;
-        SKPaymentTransaction *transaction = [RefreshRequest.receiptProperties valueForKey:@"transaction"];
-        if (transaction) {
-            [self completeTransaction:transaction retryWhenreceiptURLisEmpty:NO];
-        }else{
-            [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
+        FGIAPManagerPurchaseRusult result = FGIAPManagerPurchaseRusultHalfSuccess;
+        if (error == FGIAPServiceErrorTypeNone) {
+            result = transaction.error.code == SKErrorPaymentCancelled ? FGIAPManagerPurchaseRusultCancel : FGIAPManagerPurchaseRusultFail;
         }
-    }
-}
-
-- (void)request:(SKRequest *)request didFailWithError:(nonnull NSError *)error{
-    if ([request isKindOfClass:[SKReceiptRefreshRequest class]]) {
-        SKReceiptRefreshRequest *RefreshRequest = (SKReceiptRefreshRequest *)request;
-        SKPaymentTransaction *transaction = [RefreshRequest.receiptProperties valueForKey:@"transaction"];
-        [self p_uploadErrorMaps:FGIAPServiceErrorTypeReceiptNotExist parms:FGIAPServiceErrorMapsFromTransaction(transaction)];
+        _buyProductCompleteBlock(transaction.error.localizedDescription, result);
     }
 }
 
 
-#pragma mark - private method
 
 - (void)checkReceipt:(NSString *)receipt withTransaction:(SKPaymentTransaction *)transaction handler:(FGIAPVerifyTransactionBlock)handler{
     
@@ -185,7 +195,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
                 return;
             }
             
-            [wSelf finishTransaction:transaction result: requestErr ? FGIAPManagerPurchaseRusultFail : FGIAPManagerPurchaseRusultSuccess message:message];
+            [wSelf finishTransaction:transaction result: FGIAPManagerPurchaseRusultSuccess message:message];
         }];
     }else{
         NSAssert(NO, @"You must configure the method: - pushSuccessTradeReultToServer:transaction:complete:");
@@ -206,14 +216,6 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         if (self.buyProductCompleteBlock) {
             self.buyProductCompleteBlock(msg, result);
         }
-    }
-}
-
-
-- (void)p_uploadErrorMaps:(FGIAPServiceErrorType)error parms:(NSDictionary *)parms{
-    NSMutableDictionary *logStatistics = [NSMutableDictionary dictionaryWithDictionary:parms];
-    if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushServiceErrorLogStatistics:error:)]) {
-        [self.verifyTransaction pushServiceErrorLogStatistics:logStatistics error:error];
     }
 }
 

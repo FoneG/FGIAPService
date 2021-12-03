@@ -26,7 +26,7 @@
 }
 - (IBAction)buy:(id)sender {
     
-    NSString *productId = @"com.enjoytech.DoobyIntl.auto.1";
+    NSString *productId = @"com.enjoytech.DoobyIntl.manual.1";
     //2021-12-02 14:45:46.059524+0800
     
     /// 2.获取商品信息
