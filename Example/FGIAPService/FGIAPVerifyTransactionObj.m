@@ -10,29 +10,48 @@
 
 @implementation FGIAPVerifyTransactionObj
 
-- (void)pushSuccessTradeReultToServer:(NSString *)tradeNo receipt:(NSString *)receipt transaction:(SKPaymentTransaction *)transaction complete:(nonnull FGIAPVerifyTransactionPushCallBack)handler{
-    NSLog(@"将内购成功结果推给服务器");
+- (void)pushSuccessTradeReultToServer:(NSString *)receipt transaction:(SKPaymentTransaction *)transaction complete:(FGIAPVerifyTransactionPushCallBack)handler{
+    NSLog(@"%s receipt: %@", __func__ , receipt);
     if (handler) {
-        handler(@"校验订单成功", nil);
+//        handler(@"校验订单成功", [NSError errorWithDomain:@"FGIAPVerifyTransactionObj" code:400 userInfo:nil]);
+        handler(@"Success", nil);
     }
 }
 
 - (void)pushFailTradeReultToServer:(NSString *)tradeNo cancel:(BOOL)userCancelled transaction:(nonnull SKPaymentTransaction *)transaction complete:(nonnull FGIAPVerifyTransactionPushCallBack)handler{
-    NSLog(@"将内购失败结果推给服务器");
+    NSLog(@"%s", __func__);
     if (handler) {
-        handler(@"校验成功", nil);
+        handler(@"Failure", nil);
     }
 }
 
-- (void)checkTradeReult:(NSString *)tradeNo complete:(nonnull FGIAPVerifyTransactionBlock)handler{
-    NSLog(@"去服务器检查");
-    if (handler) {
-        handler(@"校验成功", FGIAPManagerVerifyRusultSuccess);
-    }
-}
 
 - (void)pushServiceErrorLogStatistics:(NSDictionary *)logStatistics error:(FGIAPServiceErrorType)error{
-    NSLog(@"将错误日志结果推给服务器");
+    
+    NSString *typeString = nil;
+    switch (error) {
+        case FGIAPServiceErrorTypeTransactionIdentifierNotExist:
+            typeString = @"TransactionIdentifier isEmpty";
+            break;
+        case FGIAPServiceErrorTypeReceiptNotExist:
+            typeString = @"Receipt is isEmpty";
+            break;
+        case FGIAPServiceErrorTypeVerifyTradeFail:
+            typeString = @"Verify Receipt failed";
+            break;
+        default:
+            break;
+    }
+    NSLog(@"%s : %@", __func__, typeString);
+    [self showAlert:typeString];
+}
+
+- (void)showAlert:(NSString *)message{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    }];
+    [alertController addAction:action];
+    [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
 
 @end

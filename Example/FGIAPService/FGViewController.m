@@ -26,14 +26,14 @@
 }
 - (IBAction)buy:(id)sender {
     
-    NSString *productId = @"com.enjoytech.maltbaby.dooluu6";
-    NSString *tradeNo = @"替换成后台给的tradeNo";
+    NSString *productId = @"com.enjoytech.DoobyIntl.auto.1";
+    //2021-12-02 14:45:46.059524+0800
     
     /// 2.获取商品信息
     [self.filter requestProductsWith:[NSSet setWithObject:productId] completion:^(NSArray<SKProduct *> * _Nonnull products) {
         
         /// 3.支付购买
-        [[FGIAPManager shared].iap buyProduct:products.firstObject tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) {
+        [[FGIAPManager shared].iap buyProduct:products.firstObject onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) {
             [self.view makeToast:message];
         }];
     }];

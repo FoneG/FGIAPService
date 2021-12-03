@@ -9,7 +9,7 @@
 
 @implementation NSObject (FGIsNullOrEmpty)
 
-- (BOOL)FG_isNSStringAndNotEmpty
+- (BOOL)isNSStringAndNotEmpty
 {
     if (nil == self) {
         return false;
@@ -41,7 +41,7 @@
 }
 
 
-- (BOOL)FG_isNSArrayAndNotEmpty
+- (BOOL)isNSArrayAndNotEmpty
 {
     if ([self isKindOfClass:[NSArray class]]) {
         NSArray *temp = (NSArray *)self;
@@ -51,17 +51,5 @@
     }
     return false;
 }
-
-- (BOOL)FG_isNSSetAndNotEmpty
-{
-    if ([self isKindOfClass:[NSSet class]]) {
-        NSSet *temp = (NSSet *)self;
-        if (temp.count > 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
 
 @end

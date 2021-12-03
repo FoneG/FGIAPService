@@ -11,9 +11,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSObject (FGIsNullOrEmpty)
 
-- (BOOL)isNSStringAndNotEmpty;
-- (BOOL)isNSArrayAndNotEmpty;
+- (BOOL)FG_isNSStringAndNotEmpty;
 
+- (BOOL)FG_isNSArrayAndNotEmpty;
+
+- (BOOL)FG_isNSSetAndNotEmpty;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -512,7 +512,7 @@
 				GCC_PREFIX_HEADER = "FGIAPService/FGIAPService-Prefix.pch";
 				INFOPLIST_FILE = "FGIAPService/FGIAPService-Info.plist";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = com.enjoytech.maltbaby;
+				PRODUCT_BUNDLE_IDENTIFIER = com.enjoytech.DoobyIntl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 				WRAPPER_EXTENSION = app;
@@ -529,7 +529,7 @@
 				GCC_PREFIX_HEADER = "FGIAPService/FGIAPService-Prefix.pch";
 				INFOPLIST_FILE = "FGIAPService/FGIAPService-Info.plist";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = com.enjoytech.maltbaby;
+				PRODUCT_BUNDLE_IDENTIFIER = com.enjoytech.DoobyIntl;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 				WRAPPER_EXTENSION = app;
