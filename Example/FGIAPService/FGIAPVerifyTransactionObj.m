@@ -28,22 +28,19 @@
 
 - (void)pushServiceErrorLogStatistics:(NSDictionary *)logStatistics error:(FGIAPServiceErrorType)error{
     
-    NSString *typeString = nil;
     switch (error) {
         case FGIAPServiceErrorTypeTransactionIdentifierNotExist:
-            typeString = @"TransactionIdentifier isEmpty";
+            [self showAlert:@"TransactionIdentifier isEmpty"];
             break;
         case FGIAPServiceErrorTypeReceiptNotExist:
-            typeString = @"Receipt is isEmpty";
+            [self showAlert:@"Receipt is isEmpty"];
             break;
         case FGIAPServiceErrorTypeVerifyTradeFail:
-            typeString = @"Verify Receipt failed";
+            [self showAlert:@"Verify Receipt failed"];
             break;
         default:
             break;
     }
-    NSLog(@"%s : %@", __func__, typeString);
-    [self showAlert:typeString];
 }
 
 - (void)showAlert:(NSString *)message{

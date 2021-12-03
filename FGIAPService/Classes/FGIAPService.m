@@ -22,7 +22,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 @property (nonatomic, strong) id<FGIAPVerifyTransaction> verifyTransaction;
 @property (nonatomic, copy) FGIAPManagerBuyBlock buyProductCompleteBlock;
 @property (nonatomic, strong) NSString *productIdentifier;
-
+@property (nonatomic, strong)  SKPayment *APPStorePayment;
 @end
 
 @implementation FGIAPService
@@ -47,8 +47,8 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
         return;
     }
     if ([product.productIdentifier isNSStringAndNotEmpty]) {
-        self.productIdentifier = product.productIdentifier;
-        self.buyProductCompleteBlock = completion;
+        _productIdentifier = product.productIdentifier;
+        _buyProductCompleteBlock = completion;
         SKMutablePayment *payment = [SKMutablePayment paymentWithProduct:product];
         if ([SKPaymentQueue defaultQueue]) {
             [[SKPaymentQueue defaultQueue] addPayment:payment];
@@ -58,6 +58,11 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     }
 }
 
+- (void)tryShouldAddStorePayments{
+    if (_APPStorePayment && [SKPaymentQueue defaultQueue]) {
+        [[SKPaymentQueue defaultQueue] addPayment:self.APPStorePayment];
+    }
+}
 
 #pragma mark - SKPaymentTransactionObserver
 
@@ -99,8 +104,15 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     }
 }
 
-- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product NS_SWIFT_NAME(paymentQueue(_:shouldAddStorePayment:for:)) API_AVAILABLE(ios(11.0), macos(11.0), macCatalyst(14.0)) API_UNAVAILABLE(watchos){
-    return false;
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product API_AVAILABLE(ios(11.0)){
+    BOOL shouldAddStorePayment = NO;
+    if (_verifyTransaction && [_verifyTransaction respondsToSelector:@selector(paymentQueue:shouldAddStorePayment:forProduct:)]) {
+        shouldAddStorePayment = [_verifyTransaction paymentQueue:queue shouldAddStorePayment:payment forProduct:product];
+    }
+    if (shouldAddStorePayment == NO) {
+        _APPStorePayment = payment;
+    }
+    return shouldAddStorePayment;
 }
 
 
@@ -167,6 +179,7 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     
     NSMutableDictionary *logStatistics = [NSMutableDictionary dictionaryWithDictionary:FGIAPServiceErrorMapsFromTransaction(transaction)];
     if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushServiceErrorLogStatistics:error:)]) {
+        [logStatistics setValue:@(error) forKey:@"error"];
         [self.verifyTransaction pushServiceErrorLogStatistics:logStatistics error:error];
     }
     
@@ -184,8 +197,8 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
 - (void)checkReceipt:(NSString *)receipt withTransaction:(SKPaymentTransaction *)transaction handler:(FGIAPVerifyTransactionBlock)handler{
     
     WS(wSelf);
-    if (self.verifyTransaction && [self.verifyTransaction respondsToSelector:@selector(pushSuccessTradeReultToServer:transaction:complete:)]) {
-        [self.verifyTransaction pushSuccessTradeReultToServer:receipt transaction:transaction complete:^(NSString * _Nonnull message, NSError * _Nullable requestErr) {
+    if (_verifyTransaction && [_verifyTransaction respondsToSelector:@selector(pushSuccessTradeReultToServer:transaction:complete:)]) {
+        [_verifyTransaction pushSuccessTradeReultToServer:receipt transaction:transaction complete:^(NSString * _Nonnull message, NSError * _Nullable requestErr) {
 
             //polling verify transaction
             if (requestErr && requestErr.code != FGIAPServerOverdueErrorCode) {
@@ -213,8 +226,8 @@ static NSMutableDictionary *FGIAPServiceErrorMapsFromTransaction (SKPaymentTrans
     
     if (transaction.originalTransaction == nil && [transaction.payment.productIdentifier isEqualToString:self.productIdentifier]) {
         self.productIdentifier = nil;
-        if (self.buyProductCompleteBlock) {
-            self.buyProductCompleteBlock(msg, result);
+        if (_buyProductCompleteBlock) {
+            _buyProductCompleteBlock(msg, result);
         }
     }
 }

@@ -21,15 +21,25 @@ typedef void(^FGIAPManagerBuyBlock)(NSString *message, FGIAPManagerPurchaseRusul
 
 @interface FGIAPService : NSObject
 
-/// 初始化支付对象
-/// @param verifyTransaction 服务器校验代理
-///      一般得到苹果服务器返回的支付结果后，需要通过<verifyTransaction>再次向服务器进行二次确认，来保证整个支付链路闭环
+
+/**
+ * 初始化支付对象
+ * @param verifyTransaction 一般得到苹果服务器返回的支付结果后，需要通过<verifyTransaction>再次向服务器进行二次确认，来保证整个支付链路闭环
+ */
 - (instancetype)initWithTransaction:(id<FGIAPVerifyTransaction>)verifyTransaction;
 
-/// iap支付
-/// @param product 对应的商品
-/// @param completion 支付回调
+/**
+ * iap支付
+ * @param product 对应的商品
+ * @param completion 支付回调
+ */
 - (void)buyProduct:(SKProduct *)product onCompletion:(FGIAPManagerBuyBlock)completion;
+
+
+/**
+ * 在合适的时间处理从App Store下载页面触发的内购行为
+ */
+- (void)tryShouldAddStorePayments;
 
 @end
 
