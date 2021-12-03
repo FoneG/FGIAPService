@@ -10,7 +10,7 @@
 [更详细的介绍](https://juejin.cn/post/6963969762703605791)
 
 ## 已解决问题
-- 窜单（订单映射）
+- 窜单
 - 漏单
 - 账号切换
 - apple验证
@@ -63,9 +63,9 @@ FGIAPProductsFilter *filter = [[FGIAPProductsFilter alloc] init];
 
 ##### 3. 支付购买
 
-FGIAPService会将服务器下发的tradeNo和SKProduct进行绑定，完成商品的支付并返回支付结果
+完成SKProduct商品的支付并返回支付结果
 ```
-[[FGIAPManager shared].iap buyProduct:product tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
+[[FGIAPManager shared].iap buyProduct:product onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
 ```
 
 
