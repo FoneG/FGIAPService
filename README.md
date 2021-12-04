@@ -5,12 +5,12 @@
 [![License](https://img.shields.io/cocoapods/l/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
 [![Platform](https://img.shields.io/cocoapods/p/FGIAPService.svg?style=flat)](https://cocoapods.org/pods/FGIAPService)
 
-一套用于解决苹果IAP的解决方案，适用于希望自己架设服务器进行验证的开发者, 能够非常简单快速地接入到项目中
+一套用于解决苹果IAP的解决方案，支持自动续费订阅，适用于希望自己架设服务器进行验证的开发者, 能够非常简单快速地接入到项目中
 
 [更详细的介绍](https://juejin.cn/post/6963969762703605791)
 
 ## 已解决问题
-- 窜单（订单映射）
+- 窜单
 - 漏单
 - 账号切换
 - apple验证
@@ -42,7 +42,7 @@
 
 ##### 1. 配置服务器校验代理对象
 
-需要配置一个遵守<FGIAPVerifyTransaction>协议的对象，来完成跟服务器订单状态同步，需要在APP一启动的时候就开始配置。
+需要配置一个遵守<FGIAPVerifyTransaction>协议的对象，来完成跟服务器订单状态同步，建议在APP一启动的时候就开始配置（也可以在登录成功后）。
 ```
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
@@ -63,9 +63,9 @@ FGIAPProductsFilter *filter = [[FGIAPProductsFilter alloc] init];
 
 ##### 3. 支付购买
 
-FGIAPService会将服务器下发的tradeNo和SKProduct进行绑定，完成商品的支付并返回支付结果
+完成SKProduct商品的支付并返回支付结果
 ```
-[[FGIAPManager shared].iap buyProduct:product tradeNo:tradeNo onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
+[[FGIAPManager shared].iap buyProduct:product onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
 ```
 
 
