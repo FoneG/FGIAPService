@@ -1,8 +1,6 @@
 PODS:
-  - FGIAPService (0.4.0):
-    - UICKeyChainStore (~> 2.1.0)
+  - FGIAPService (0.5.0)
   - Toast (4.0.0)
-  - UICKeyChainStore (2.1.2)
 
 DEPENDENCIES:
   - FGIAPService (from `../`)
@@ -11,16 +9,14 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - Toast
-    - UICKeyChainStore
 
 EXTERNAL SOURCES:
   FGIAPService:
     :path: "../"
 
 SPEC CHECKSUMS:
-  FGIAPService: 1e6d94ef8af645c1b26d037ef241826b6518c0c2
+  FGIAPService: d0848b3a193fd2a66563218cf87b615b68e9e155
   Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
-  UICKeyChainStore: 85db518bb1d294366d15ec9b92a416c4e670518f
 
 PODFILE CHECKSUM: 42786664615ed59aa0e21b8e04958c500d011f76
 

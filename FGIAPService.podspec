@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'FGIAPService'
-  s.version          = '0.4.0'
+  s.version          = '0.5.0'
   s.summary          = 'IAP helper for Apple in app purchases.'
   s.description      = <<-DESC
                             FGIAPService is a simple wrapper for Apple in app purchases..
@@ -23,5 +23,4 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '9.0'
   s.source_files = 'FGIAPService/Classes/**/*'
   s.framework  = 'StoreKit'
-  s.dependency 'UICKeyChainStore', '~> 2.1.0'
 end

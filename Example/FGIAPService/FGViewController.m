@@ -10,6 +10,7 @@
 #import <FGIAPService/FGIAPManager.h>
 #import <FGIAPService/FGIAPProductsFilter.h>
 #import <Toast.h>
+#import "FGIAPVerifyTransactionObj.h"
 
 @interface FGViewController ()
 @property (nonatomic, strong) FGIAPProductsFilter *filter;
@@ -37,6 +38,11 @@
             [self.view makeToast:message];
         }];
     }];
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
+    // 1. 配置内购服务
+    [[FGIAPManager shared] setConfigureWith:[FGIAPVerifyTransactionObj new]];
 }
 
 - (void)didReceiveMemoryWarning

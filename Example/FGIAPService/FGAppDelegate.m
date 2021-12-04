@@ -16,8 +16,6 @@
 {
     // Override point for customization after application launch.
     
-    // 1. 配置内购服务
-    [[FGIAPManager shared] setConfigureWith:[FGIAPVerifyTransactionObj new]];
     return YES;
 }
 
