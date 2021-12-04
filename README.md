@@ -42,7 +42,7 @@
 
 ##### 1. 配置服务器校验代理对象
 
-需要配置一个遵守<FGIAPVerifyTransaction>协议的对象，来完成跟服务器订单状态同步，需要在APP一启动的时候就开始配置。
+需要配置一个遵守<FGIAPVerifyTransaction>协议的对象，来完成跟服务器订单状态同步，建议在APP一启动的时候就开始配置（也可以在登录成功后）。
 ```
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
