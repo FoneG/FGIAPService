@@ -68,7 +68,7 @@ FGIAPProductsFilter *filter = [[FGIAPProductsFilter alloc] init];
 [[FGIAPManager shared].iap buyProduct:product onCompletion:^(NSString * _Nonnull message, FGIAPManagerPurchaseRusult result) { }];
 ```
 
-## 版本更新    
+## 版本更新内容    
     
 0.5.0
 - 支持自动订阅类型
