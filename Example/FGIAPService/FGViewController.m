@@ -40,11 +40,6 @@
     }];
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
-    // 1. 配置内购服务
-    [[FGIAPManager shared] setConfigureWith:[FGIAPVerifyTransactionObj new]];
-}
-
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
