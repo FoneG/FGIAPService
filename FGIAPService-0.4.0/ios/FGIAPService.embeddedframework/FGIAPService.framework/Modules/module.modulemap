@@ -1,6 +1,0 @@
-framework module FGIAPService {
-  umbrella header "FGIAPService.h"
-
-  export *
-  module * { export * }
-}
